@@ -1789,7 +1789,7 @@ function afficherInfosPaiement(mode) {
         <div style="font-size:28px;font-weight:900;font-family:var(--font-mono);
                     letter-spacing:3px;color:var(--gold);">${mode.agent_code}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-          Rendez-vous chez un agent ${mode.label} et effectuez un dépôt sur ce code agent
+          Rendez-vous chez un agent ${mode.label} pour recharger votre compte et effectuez un retrait sur ce code agent
         </div>
       </div>`;
   }
