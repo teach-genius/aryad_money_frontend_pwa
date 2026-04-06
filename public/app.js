@@ -782,7 +782,7 @@ Router.register('gerer', () => {
       </div>
 
       <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text-muted);">
-        AryadMoney v1.0.0 · <span style="color:var(--gold);">PWA</span>
+        AryadMoney v1.0.0 · <span style="color:var(--gold);">ARYAD</span>
       </div>
     </div>
   </div>`;
