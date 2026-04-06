@@ -2,34 +2,82 @@
 <html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
   <meta name="theme-color" content="#20262D" />
   <meta name="description" content="AryadMoney — Votre portefeuille mobile" />
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AryadMoney">
-
   <title>AryadMoney</title>
-
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json" />
-
-  <!-- Icons (IMPORTANT: chemins ABSOLUS) -->
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/manifest-icon-192.maskable.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="/icons/manifest-icon-512.maskable.png" />
   <link rel="apple-touch-icon" href="/icons/manifest-icon-192.maskable.png" />
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-
-  <!-- App CSS -->
   <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Splash inline style pour garantir l'affichage avant le CSS externe -->
+  <style>
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: #20262D;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+    }
+    #splash-screen .splash-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    #splash-screen .splash-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #DAAE54, #B8902F);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 40px rgba(218,174,84,0.3);
+    }
+    #splash-screen .splash-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #DAAE54, #B8902F);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #splash-screen .splash-loader {
+      margin-top: 48px;
+      width: 120px;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #splash-screen .splash-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #B8902F, #DAAE54);
+      border-radius: 2px;
+      animation: splashBar 1.6s ease forwards;
+    }
+    @keyframes splashBar {
+      from { width: 0; }
+      to   { width: 100%; }
+    }
+    #app.hidden { display: none; }
+  </style>
 </head>
 
 <body>
@@ -38,9 +86,9 @@
   <div id="splash-screen">
     <div class="splash-logo">
       <div class="splash-icon">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-          <rect width="64" height="64" rx="16" fill="#DAAE54"/>
-          <path d="M32 12C21 12 12 21 12 32C12 43 21 52 32 52C43 52 52 43 52 32C52 21 43 12 32 12Z" fill="white" fill-opacity="0.15"/>
+        <svg width="44" height="44" viewBox="0 0 64 64" fill="none">
+          <path d="M32 12C21 12 12 21 12 32C12 43 21 52 32 52C43 52 52 43 52 32C52 21 43 12 32 12Z"
+                fill="white" fill-opacity="0.15"/>
           <path d="M22 32H42M32 22V42" stroke="white" stroke-width="3" stroke-linecap="round"/>
           <circle cx="32" cy="32" r="6" fill="white" fill-opacity="0.3"/>
         </svg>
@@ -54,49 +102,48 @@
 
   <!-- App -->
   <div id="app" class="hidden">
-
     <div id="toast-container"></div>
-
     <div id="modal-overlay" class="hidden"></div>
     <div id="modal-container" class="hidden"></div>
-
     <div id="view-container"></div>
 
     <!-- Bottom Navigation -->
     <nav id="bottom-nav" class="bottom-nav hidden">
-      <button class="nav-item active" data-route="home">
-        🏠 <span>Accueil</span>
+      <button class="nav-item" data-route="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Accueil</span>
       </button>
-
       <button class="nav-item" data-route="recharge">
-        💳 <span>Recharge</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        <span>Recharge</span>
       </button>
-
       <button class="nav-item nav-fab" data-route="virement">
-        ✈️ <span>Virement</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span>Virement</span>
       </button>
-
       <button class="nav-item" data-route="retrait">
-        📤 <span>Retrait</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        <span>Retrait</span>
       </button>
-
       <button class="nav-item" data-route="gerer">
-        👤 <span>Compte</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Compte</span>
       </button>
     </nav>
-
   </div>
 
-  <!-- Scripts -->
+  <!-- Scripts dans le bon ordre -->
   <script src="/api.js"></script>
   <script src="/app.js"></script>
 
-  <!-- SERVICE WORKER (CRITIQUE POUR PWA INSTALL) -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(() => console.log('✅ Service Worker OK'))
-        .catch(err => console.log('❌ SW Error:', err));
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(function() { console.log('✅ SW registered'); })
+          .catch(function(err) { console.warn('❌ SW error:', err); });
+      });
     }
   </script>
 

@@ -1,14 +1,14 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- *  ARYADMONEY PWA — api.js
+ *  ARYADMONEY PWA — api.js  (version corrigée)
  *  Client HTTP centralisé, gestion tokens, refresh auto
  * ═══════════════════════════════════════════════════════════════
  */
 
-const API_BASE = 'https://farya.pythonanywhere.com/v1';// ← remplacer avec l'URL réelle
+const API_BASE   = 'https://farya.pythonanywhere.com/v1';
 const TIMEOUT_MS = 20000;
 
-/* ─── Storage Keys ─────────────────────────────────────────────── */
+/* ─── Storage Keys ──────────────────────────────────────────── */
 const KEYS = {
   TOKEN:         'aryadmoney_token',
   REFRESH_TOKEN: 'aryadmoney_refresh',
@@ -16,20 +16,20 @@ const KEYS = {
   USER_ID:       'aryadmoney_uid',
 };
 
-/* ─── Token Store ──────────────────────────────────────────────── */
+/* ─── Token Store ───────────────────────────────────────────── */
 const TokenStore = {
-  get()           { return localStorage.getItem(KEYS.TOKEN); },
-  set(t)          { localStorage.setItem(KEYS.TOKEN, t); },
-  getRefresh()    { return localStorage.getItem(KEYS.REFRESH_TOKEN); },
-  setRefresh(t)   { localStorage.setItem(KEYS.REFRESH_TOKEN, t); },
-  clear()         { [KEYS.TOKEN, KEYS.REFRESH_TOKEN, KEYS.USER, KEYS.USER_ID].forEach(k => localStorage.removeItem(k)); },
-  saveUser(u)     { localStorage.setItem(KEYS.USER, JSON.stringify(u)); },
-  getUser()       { try { return JSON.parse(localStorage.getItem(KEYS.USER)); } catch { return null; } },
-  saveUserId(id)  { localStorage.setItem(KEYS.USER_ID, id); },
-  getUserId()     { return localStorage.getItem(KEYS.USER_ID); },
+  get()          { return localStorage.getItem(KEYS.TOKEN); },
+  set(t)         { localStorage.setItem(KEYS.TOKEN, t); },
+  getRefresh()   { return localStorage.getItem(KEYS.REFRESH_TOKEN); },
+  setRefresh(t)  { localStorage.setItem(KEYS.REFRESH_TOKEN, t); },
+  clear()        { [KEYS.TOKEN, KEYS.REFRESH_TOKEN, KEYS.USER, KEYS.USER_ID].forEach(k => localStorage.removeItem(k)); },
+  saveUser(u)    { localStorage.setItem(KEYS.USER, JSON.stringify(u)); },
+  getUser()      { try { return JSON.parse(localStorage.getItem(KEYS.USER)); } catch { return null; } },
+  saveUserId(id) { localStorage.setItem(KEYS.USER_ID, id); },
+  getUserId()    { return localStorage.getItem(KEYS.USER_ID); },
 };
 
-/* ─── Error messages ───────────────────────────────────────────── */
+/* ─── Error messages ────────────────────────────────────────── */
 function httpErrorMessage(status, body = {}) {
   if (body.message) return body.message;
   if (body.error)   return body.error;
@@ -48,7 +48,7 @@ function httpErrorMessage(status, body = {}) {
   return map[status] || `Une erreur est survenue (code ${status}).`;
 }
 
-/* ─── ApiResult ────────────────────────────────────────────────── */
+/* ─── ApiResult ─────────────────────────────────────────────── */
 class ApiResult {
   constructor(data, error, status) {
     this.data       = data   ?? null;
@@ -62,7 +62,7 @@ class ApiResult {
   static failure(error, status) { return new ApiResult(null, error, status); }
 }
 
-/* ─── Core fetch wrapper ───────────────────────────────────────── */
+/* ─── Core fetch wrapper ────────────────────────────────────── */
 async function _request(method, endpoint, body, requiresAuth = true) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -90,7 +90,7 @@ async function _request(method, endpoint, body, requiresAuth = true) {
 
     if (res.ok) return ApiResult.success(json, res.status);
 
-    // Auto-refresh on 401
+    /* Auto-refresh on 401 */
     if (res.status === 401 && requiresAuth) {
       const refreshed = await _refreshToken();
       if (refreshed) return _request(method, endpoint, body, requiresAuth);
@@ -132,7 +132,7 @@ async function _refreshToken() {
   } catch { return false; }
 }
 
-/* ─── Public HTTP methods ──────────────────────────────────────── */
+/* ─── Public HTTP methods ───────────────────────────────────── */
 const Api = {
   get:    (ep, auth = true)       => _request('GET',    ep, null, auth),
   post:   (ep, body, auth = true) => _request('POST',   ep, body, auth),
@@ -147,7 +147,11 @@ const Api = {
 const AuthService = {
 
   async login({ telephone, codePays, motDePasse }) {
-    const r = await Api.post('/auth/login', { telephone, code_pays: codePays, mot_de_passe: motDePasse }, false);
+    const r = await Api.post('/auth/login', {
+      telephone,
+      code_pays: codePays,
+      mot_de_passe: motDePasse,
+    }, false);
     if (r.isFailure) return r;
 
     const { access_token, refresh_token, user } = r.data;
@@ -174,7 +178,6 @@ const AuthService = {
 
     if (r.isFailure) return r;
 
-    // Retourne succès avec email_masque + infos nécessaires pour la page OTP
     return ApiResult.success({
       email_masque: r.data?.email_masque || email,
       telephone,
@@ -183,7 +186,11 @@ const AuthService = {
   },
 
   async verifyOtp({ telephone, codePays, code }) {
-    const r = await Api.post('/auth/verify-otp', { telephone, code_pays: codePays, code }, false);
+    const r = await Api.post('/auth/verify-otp', {
+      telephone,
+      code_pays: codePays,
+      code,
+    }, false);
     if (r.isFailure) return r;
 
     const { access_token, refresh_token, user } = r.data;
@@ -221,8 +228,7 @@ const AccountService = {
 
   async getProfile() {
     const r = await Api.get('/account/profile');
-    if (r.isFailure) return r;
-    TokenStore.saveUser(r.data);
+    if (r.isSuccess) TokenStore.saveUser(r.data);
     return r;
   },
 
@@ -232,11 +238,11 @@ const AccountService = {
     return Api.get(ep);
   },
 
-  async getNotifications() { return Api.get('/account/notifications'); },
-  async markNotifRead(id) { return Api.put(`/account/notifications/${id}/read`, {}); },
-  async markAllRead()     { return Api.post('/account/notifications/read-all', {}); },
+  async getNotifications()  { return Api.get('/account/notifications'); },
+  async markNotifRead(id)   { return Api.put(`/account/notifications/${id}/read`, {}); },
+  async markAllRead()       { return Api.post('/account/notifications/read-all', {}); },
 
-  async getBeneficiaires() { return Api.get('/account/beneficiaires'); },
+  async getBeneficiaires()  { return Api.get('/account/beneficiaires'); },
 
   async addBeneficiaire({ nom, prenom, telephone, pays }) {
     return Api.post('/account/beneficiaires', { nom, prenom, telephone, pays });
@@ -263,13 +269,23 @@ const TransactionService = {
   async virement({ telephone, codePays, montant, motif = '' }) {
     const err = this._validateMontant(montant);
     if (err) return ApiResult.failure(err);
-    return Api.post('/transactions/virement', { telephone, code_pays: codePays, montant: parseFloat(montant), motif });
+    return Api.post('/transactions/virement', {
+      telephone,
+      code_pays: codePays,
+      montant: parseFloat(montant),
+      motif,
+    });
   },
 
   async rechargeRequest({ telephone, codePays, montant, operateur }) {
     const err = this._validateMontant(montant);
     if (err) return ApiResult.failure(err);
-    return Api.post('/transactions/recharge/demande', { telephone, code_pays: codePays, montant: parseFloat(montant), operateur });
+    return Api.post('/transactions/recharge/demande', {
+      telephone,
+      code_pays: codePays,
+      montant: parseFloat(montant),
+      operateur,
+    });
   },
 
   async rechargeTicket({ code }) {
@@ -331,16 +347,16 @@ const RechargeService = {
   },
 };
 
-/* ─── Expose globally ──────────────────────────────────────────── */
-window.Api             = Api;
-window.ApiResult       = ApiResult;
-window.AuthService     = AuthService;
-window.AccountService  = AccountService;
+/* ─── Expose globals ────────────────────────────────────────── */
+window.Api                = Api;
+window.ApiResult          = ApiResult;
+window.AuthService        = AuthService;
+window.AccountService     = AccountService;
 window.TransactionService = TransactionService;
 window.RechargeService    = RechargeService;
-window.TokenStore      = TokenStore;
+window.TokenStore         = TokenStore;
 
-/* ─── Country helpers ──────────────────────────────────────────── */
+/* ─── Country helpers ───────────────────────────────────────── */
 window.COUNTRIES = {
   MA: { flag: '🇲🇦', code: '+212', label: '🇲🇦 +212' },
   SN: { flag: '🇸🇳', code: '+221', label: '🇸🇳 +221' },
@@ -352,7 +368,7 @@ window.COUNTRIES = {
 window.formatMontant = (montant, devise = 'MAD') => {
   const abs = Math.abs(montant);
   if (abs >= 1_000_000) return (abs / 1_000_000).toFixed(2) + ' M ' + devise;
-  if (abs >= 1_000)     return (abs / 1_000).toFixed(2) + ' K ' + devise;
+  if (abs >= 1_000)     return (abs / 1_000).toFixed(2)     + ' K ' + devise;
   return abs.toFixed(2) + ' ' + devise;
 };
 
@@ -368,8 +384,8 @@ window.formatDate = (dateStr) => {
 };
 
 window.formatDateGroup = (dateStr) => {
-  const date = new Date(dateStr);
-  const now  = new Date();
+  const date  = new Date(dateStr);
+  const now   = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const d     = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const diff  = Math.floor((today - d) / 86400000);
@@ -382,75 +398,76 @@ window.formatDateGroup = (dateStr) => {
 window.getInitials = (nom = '', prenom = '') =>
   ((prenom[0] || '') + (nom[0] || '')).toUpperCase() || '??';
 
-
-// Dans api.js — déjà présent, à compléter
-let deferredPrompt = null
+/* ─── PWA Install (Android / Chrome) ───────────────────────── */
+let _deferredPrompt = null;
 
 window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault()
-    deferredPrompt = e
-    // Afficher un bouton custom
-    showInstallBanner()
-})
+  e.preventDefault();
+  _deferredPrompt = e;
+  _showInstallBanner();
+});
 
-function showInstallBanner() {
-    const banner = document.createElement('div')
-    banner.id = 'install-banner'
-    banner.innerHTML = `
-        <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;
-                    background:#DAAE54;border-radius:16px;padding:14px 16px;
-                    display:flex;align-items:center;gap:12px;
-                    box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-            <div style="font-size:28px;">📲</div>
-            <div style="flex:1;">
-                <div style="font-weight:800;color:#20262D;font-size:14px;">Installer AryadMoney</div>
-                <div style="font-size:12px;color:#4a3800;">Accès rapide depuis votre écran d'accueil</div>
-            </div>
-            <button onclick="doInstall()"
-                style="background:#20262D;color:#DAAE54;border:none;border-radius:10px;
-                       padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;">
-                Installer
-            </button>
-            <button onclick="document.getElementById('install-banner').remove()"
-                style="background:none;border:none;font-size:18px;cursor:pointer;color:#20262D;">✕</button>
-        </div>
-    `
-    document.body.appendChild(banner)
+function _showInstallBanner() {
+  if (document.getElementById('install-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.innerHTML = `
+    <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9998;
+                background:#DAAE54;border-radius:16px;padding:14px 16px;
+                display:flex;align-items:center;gap:12px;
+                box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="font-size:26px;">📲</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;color:#20262D;font-size:14px;">Installer AryadMoney</div>
+        <div style="font-size:12px;color:#4a3800;">Accès rapide depuis votre écran d'accueil</div>
+      </div>
+      <button onclick="doInstall()"
+        style="background:#20262D;color:#DAAE54;border:none;border-radius:10px;
+               padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;">
+        Installer
+      </button>
+      <button onclick="document.getElementById('install-banner').remove()"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:#20262D;line-height:1;">✕</button>
+    </div>`;
+  document.body.appendChild(banner);
 }
 
 window.doInstall = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    deferredPrompt = null
-    document.getElementById('install-banner')?.remove()
-}
+  if (!_deferredPrompt) return;
+  _deferredPrompt.prompt();
+  await _deferredPrompt.userChoice;
+  _deferredPrompt = null;
+  document.getElementById('install-banner')?.remove();
+};
 
-// iOS — pas de beforeinstallprompt, afficher instructions manuelles
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+/* ─── PWA Install (iOS) ─────────────────────────────────────── */
+const _isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const _isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-if (isIOS && !isStandalone) {
+if (_isIOS && !_isStandalone) {
+  window.addEventListener('load', () => {
     setTimeout(() => {
-        const banner = document.createElement('div')
-        banner.innerHTML = `
-            <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;
-                        background:#DAAE54;border-radius:16px;padding:14px 16px;
-                        box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-                <div style="font-weight:800;color:#20262D;font-size:14px;margin-bottom:6px;">
-                    📲 Installer AryadMoney
-                </div>
-                <div style="font-size:12px;color:#4a3800;line-height:1.6;">
-                    Appuyez sur <strong>⬆️ Partager</strong> puis
-                    <strong>Sur l'écran d'accueil</strong>
-                </div>
-                <button onclick="this.closest('div').parentElement.remove()"
-                    style="margin-top:10px;background:#20262D;color:#DAAE54;border:none;
-                           border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">
-                    OK
-                </button>
-            </div>
-        `
-        document.body.appendChild(banner)
-    }, 3000)
+      if (document.getElementById('ios-install-banner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'ios-install-banner';
+      banner.innerHTML = `
+        <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9998;
+                    background:#DAAE54;border-radius:16px;padding:14px 16px;
+                    box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+          <div style="font-weight:800;color:#20262D;font-size:14px;margin-bottom:6px;">
+            📲 Installer AryadMoney
+          </div>
+          <div style="font-size:12px;color:#4a3800;line-height:1.6;">
+            Appuyez sur <strong>⬆️ Partager</strong> puis
+            <strong>Sur l'écran d'accueil</strong>
+          </div>
+          <button onclick="this.closest('#ios-install-banner').remove()"
+            style="margin-top:10px;background:#20262D;color:#DAAE54;border:none;
+                   border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">
+            OK
+          </button>
+        </div>`;
+      document.body.appendChild(banner);
+    }, 4000);
+  });
 }
