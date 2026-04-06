@@ -381,3 +381,76 @@ window.formatDateGroup = (dateStr) => {
 
 window.getInitials = (nom = '', prenom = '') =>
   ((prenom[0] || '') + (nom[0] || '')).toUpperCase() || '??';
+
+
+// Dans api.js — déjà présent, à compléter
+let deferredPrompt = null
+
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault()
+    deferredPrompt = e
+    // Afficher un bouton custom
+    showInstallBanner()
+})
+
+function showInstallBanner() {
+    const banner = document.createElement('div')
+    banner.id = 'install-banner'
+    banner.innerHTML = `
+        <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;
+                    background:#DAAE54;border-radius:16px;padding:14px 16px;
+                    display:flex;align-items:center;gap:12px;
+                    box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <div style="font-size:28px;">📲</div>
+            <div style="flex:1;">
+                <div style="font-weight:800;color:#20262D;font-size:14px;">Installer AryadMoney</div>
+                <div style="font-size:12px;color:#4a3800;">Accès rapide depuis votre écran d'accueil</div>
+            </div>
+            <button onclick="doInstall()"
+                style="background:#20262D;color:#DAAE54;border:none;border-radius:10px;
+                       padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;">
+                Installer
+            </button>
+            <button onclick="document.getElementById('install-banner').remove()"
+                style="background:none;border:none;font-size:18px;cursor:pointer;color:#20262D;">✕</button>
+        </div>
+    `
+    document.body.appendChild(banner)
+}
+
+window.doInstall = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    deferredPrompt = null
+    document.getElementById('install-banner')?.remove()
+}
+
+// iOS — pas de beforeinstallprompt, afficher instructions manuelles
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+
+if (isIOS && !isStandalone) {
+    setTimeout(() => {
+        const banner = document.createElement('div')
+        banner.innerHTML = `
+            <div style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9999;
+                        background:#DAAE54;border-radius:16px;padding:14px 16px;
+                        box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+                <div style="font-weight:800;color:#20262D;font-size:14px;margin-bottom:6px;">
+                    📲 Installer AryadMoney
+                </div>
+                <div style="font-size:12px;color:#4a3800;line-height:1.6;">
+                    Appuyez sur <strong>⬆️ Partager</strong> puis
+                    <strong>Sur l'écran d'accueil</strong>
+                </div>
+                <button onclick="this.closest('div').parentElement.remove()"
+                    style="margin-top:10px;background:#20262D;color:#DAAE54;border:none;
+                           border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;">
+                    OK
+                </button>
+            </div>
+        `
+        document.body.appendChild(banner)
+    }, 3000)
+}
